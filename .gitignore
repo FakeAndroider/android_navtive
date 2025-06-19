@@ -1,2 +1,5 @@
 .gradle
 .DS_Store
+app/.cxx
+app/.idea
+.idea
