@@ -40,7 +40,6 @@ Java_com_example_cplusplus_MainActivity_onEngineCreate(JNIEnv *env, jobject) {
 
 void test_child_process() {
     Logger::init(true);
-    Logger::startLogThread();
     Logger::log(Logger::INFO, "parent process started, pid = %d", getpid());
 
     sleep(2);
@@ -62,11 +61,15 @@ void test_child_process() {
             sleep(1);
         }
 
+        exit(0);// child exit cleanly
+        Logger::stopLogThread();
 
     } else {
+
+        Logger::startLogThread();
         ndk_log_info("parent pid = %d", getpid());
     }
 
-    Logger::stopLogThread();
+
 
 }

@@ -87,40 +87,42 @@ int Logger::levelToAndroidLog(Logger::LogLevel level) {
 
 void *Logger::logThreadFunc(void *arg) {
 
+    int fd = (int) (intptr_t) arg;
+    if (!s_isParent || fd < 0) return nullptr;
 
-    if (!s_isParent || s_ipc_fd_parent < 0 || !s_threadRunning) return nullptr;
+    char buffer[256];
+    while (true) {
+        /// 当前线程关闭了
+        if (!s_threadRunning) {
+            break;
+        }
+        // 阻塞等待数据，这里的 read() 会一直挂起，直到有数据到来或出错
+        ssize_t n = read(fd, buffer, sizeof(buffer) - 1);
+        if (n > 0) {
+            buffer[n] = '\0';
+            __android_log_print(levelToAndroidLog(INFO), LOG_TAG, "receive child process Log: %s",
+                                buffer);
+        } else if (n == 0) {
+            // 对端关闭了描述符，退出线程
+            break;
+        } else {
+            if (errno == EINTR)
+                continue; // 被信号中断，继续等待
 
-
-
-
-     int fd = (int)arg;
-
-      char buffer[256];
-      while (true) {
-          // 阻塞等待数据，这里的 read() 会一直挂起，直到有数据到来或出错
-          ssize_t n = read(fd, buffer, sizeof(buffer) - 1);
-          if (n > 0) {  buffer[n] = '\0';
-              __android_log_print(levelToAndroidLog(INFO), LOG_TAG, "receive child process Log: %s", buffer);    } else if (n == 0) {    // 对端关闭了描述符，退出线程    break;    } else {    if (errno == EINTR)    continue; // 被信号中断，继续等待    __android_log_print(ANDROID_LOG_ERROR, "LoggerTool", "read error: %s", strerror(errno));    break;    }    }    return nullptr;   }
-
-
-
-
- /*   char buffer[256];
-    ssize_t n;
-    while ((n = read(s_ipc_fd_parent, buffer, sizeof(buffer) - 1)) > 0) {
-        buffer[n] = '\0';
-        __android_log_print(levelToAndroidLog(INFO), LOG_TAG, "receive child process Log: %s",
-                            buffer);*/
-
-
+            __android_log_print(levelToAndroidLog(ERROR), LOG_TAG, "read error: %s",
+                                strerror(errno));
+            break;
+        }
     }
+    return nullptr;
+
 }
 
 
 void Logger::startLogThread() {
     if (!s_isParent || s_threadRunning) return;
 
-    pthread_create(&s_logThread, nullptr, logThreadFunc, nullptr);
+    pthread_create(&s_logThread, nullptr, logThreadFunc, (void *) (intptr_t) s_ipc_fd_parent);
     pthread_detach(s_logThread);
     s_threadRunning = true;
 }
@@ -128,16 +130,16 @@ void Logger::startLogThread() {
 void Logger::stopLogThread() {
 
     s_threadRunning = false;
-    if (s_ipc_fd_parent >= 0) {
-        close(s_ipc_fd_parent);
-        s_ipc_fd_parent = -1;
-    }
+
 
     if (s_ipc_fd_child >= 0) {
         close(s_ipc_fd_child);
         s_ipc_fd_child = -1;
     }
 
-
+    if (s_ipc_fd_parent >= 0) {
+        close(s_ipc_fd_parent);
+        s_ipc_fd_parent = -1;
+    }
 
 }

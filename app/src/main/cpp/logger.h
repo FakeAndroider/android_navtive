@@ -30,7 +30,8 @@ private:
     static int levelToAndroidLog(LogLevel level);
 
 
-    static void *logThreadFunc(void *arg);
+    static  void *logThreadFunc(void *arg) ;
+
 
     static int s_ipc_fd_parent;
     // 父进程保留读端
