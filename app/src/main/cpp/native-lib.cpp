@@ -24,7 +24,7 @@ Java_com_example_cplusplus_MainActivity_onEngineCreate(JNIEnv *env, jobject) {
     engine.add(1);
     ndk_log_info("output is %d", engine.output());
 
-    reg_socketpair_callback();
+//    reg_socketpair_callback();
 
     test_child_process();
 
@@ -40,10 +40,9 @@ Java_com_example_cplusplus_MainActivity_onEngineCreate(JNIEnv *env, jobject) {
 
 void test_child_process() {
     Logger::init(true);
-    Logger::log(Logger::INFO, "parent process started, pid = %d", getpid());
+    Logger::log(Logger::INFO, "start testing..", nullptr);
 
     sleep(2);
-    ndk_log_info("testing..");
 
     pid_t pid = fork();
     if (pid < 0) {
@@ -55,21 +54,21 @@ void test_child_process() {
         Logger::init(false);
         sleep(1);
         //wait child ipc start
-        Logger::log(Logger::INFO, "Hello from child process, PID = %d\n", getpid());
+        Logger::log(Logger::INFO, "child pid = %d\n", getpid());
         for (int i = 0; i < 3; i++) {
-            Logger::log(Logger::DEBUG, "Child iteration %d\n", i);
+            Logger::log(Logger::INFO, "child iteration %d\n", i);
             sleep(1);
         }
-
-        exit(0);// child exit cleanly
+        Logger::log(Logger::ERROR, "child exit pid = %d\n", getpid());
         Logger::stopLogThread();
+        exit(0);// child exit cleanly
+
 
     } else {
 
         Logger::startLogThread();
-        ndk_log_info("parent pid = %d", getpid());
+        Logger::log(Logger::INFO, "parent pid = %d", getpid());
     }
-
 
 
 }

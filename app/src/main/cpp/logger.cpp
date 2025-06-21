@@ -100,15 +100,14 @@ void *Logger::logThreadFunc(void *arg) {
         ssize_t n = read(fd, buffer, sizeof(buffer) - 1);
         if (n > 0) {
             buffer[n] = '\0';
-            __android_log_print(levelToAndroidLog(INFO), LOG_TAG, "receive child process Log: %s",
-                                buffer);
+            __android_log_print(levelToAndroidLog(INFO), LOG_TAG, "[%d] receive: %s",
+                                getpid(), buffer);
         } else if (n == 0) {
             // 对端关闭了描述符，退出线程
             break;
         } else {
             if (errno == EINTR)
                 continue; // 被信号中断，继续等待
-
             __android_log_print(levelToAndroidLog(ERROR), LOG_TAG, "read error: %s",
                                 strerror(errno));
             break;
