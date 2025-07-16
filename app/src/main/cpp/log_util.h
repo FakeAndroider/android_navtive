@@ -14,7 +14,7 @@
 
 #define LOG_TAG "--->engine"
 
-static inline void ndk_log_info(const char *fmt, ...) {
+static inline void ALOGE(const char *fmt, ...) {
     va_list args;
     va_start(args, fmt);
     __android_log_vprint(ANDROID_LOG_INFO, LOG_TAG, fmt, args);
@@ -22,7 +22,7 @@ static inline void ndk_log_info(const char *fmt, ...) {
 }
 
 
-static inline void ndk_log_error(const char *fmt, ...) {
+static inline void ALOGW(const char *fmt, ...) {
     va_list args;
     va_start(args, fmt);
     __android_log_vprint(ANDROID_LOG_ERROR, LOG_TAG, fmt, args);

@@ -33,7 +33,7 @@ static void read_signal_handler();
 static void write_sigchld_handler(int signum) {
 // 向 signal_write_fd 写入一个字符("1")，以便通过 epoll 得到通知
     if (TEMP_FAILURE_RETRY(write(signal_write_fd, "1", 1)) == -1) {
-        ndk_log_error("write(signal_write_fd) failed: %s\n", strerror(errno));
+        ALOGE("write(signal_write_fd) failed: %s\n", strerror(errno));
     }
 }
 
@@ -53,7 +53,7 @@ static void reap_children() {
     pid_t pid;
     //使用 waitpid 循环回收退出的子进程
     while ((pid = waitpid(-1, &status, WNOHANG)) > 0) {
-        ndk_log_info("child process %d terminated, status is %d", pid, status);
+        ALOGE("child process %d terminated, status is %d", pid, status);
     }
 }
 
@@ -67,7 +67,7 @@ int reg_socketpair_callback() {
 
     int s[2];
     if (socketpair(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK | SOCK_CLOEXEC, 0, s) == -1) {
-        ndk_log_error("socketpair failed: %s\n", strerror(errno));
+        ALOGW("socketpair failed: %s\n", strerror(errno));
         return -1;
     }
     signal_write_fd = s[0];
@@ -79,7 +79,7 @@ int reg_socketpair_callback() {
     act.sa_handler = write_sigchld_handler;
     act.sa_flags = SA_NOCLDSTOP;
     if (sigaction(SIGCHLD, &act, NULL) < 0) {
-        ndk_log_error("sigaction failed  %s \n ", strerror(errno));
+        ALOGW("sigaction failed  %s \n ", strerror(errno));
         return -1;
     }
     return 0;
@@ -90,7 +90,7 @@ int reg_socketpair_callback() {
 int reg_epoll_callback() {
     int epfd = epoll_create1(0);
     if (epfd == -1) {
-        ndk_log_error("epoll_create1 failed %s \n ", strerror(errno));
+        ALOGW("epoll_create1 failed %s \n ", strerror(errno));
         return -1;
     }
 
@@ -100,7 +100,7 @@ int reg_epoll_callback() {
     ee.data.fd = signal_read_fd;
 
     if (epoll_ctl(epfd, EPOLL_CTL_ADD, signal_read_fd, &ee) == -1) {
-        ndk_log_error("epoll_ctl failed %s \n ", strerror(errno));
+        ALOGW("epoll_ctl failed %s \n ", strerror(errno));
         return -1;
     }
     return epfd;
@@ -115,12 +115,12 @@ int loop_epoll_event(int epfd) {
             if (errno == EINTR) {
                 continue;
             }
-            ndk_log_error("epoll_wait failed: %s", strerror(errno));
+            ALOGW("epoll_wait failed: %s", strerror(errno));
             break;
         }
 
         if (nfds == 0) {
-            ndk_log_info("No epoll events, waiting...");
+            ALOGE("No epoll events, waiting...");
             continue;
         }
 

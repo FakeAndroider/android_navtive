@@ -22,7 +22,7 @@ Java_com_example_cplusplus_MainActivity_onEngineCreate(JNIEnv *env, jobject) {
 
     Engine engine = Engine(10);
     engine.add(1);
-    ndk_log_info("output is %d", engine.output());
+    ALOGE("output is %d", engine.output());
 
 //    reg_socketpair_callback();
 
